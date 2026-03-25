@@ -1,0 +1,2066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confidence and Pitch Builder — Fora</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F5F0;
+      --card: #FFFFFF;
+      --navy: #1B2B4B;
+      --navy-mid: #2D3F63;
+      --teal: #1A9E8F;
+      --teal-dark: #137A6E;
+      --teal-light: #E8F7F5;
+      --teal-mid: #C2EDE8;
+      --gray: #6B7280;
+      --gray-light: #E8E5DF;
+      --gray-bg: #F3F2EE;
+      --border: #E5E1D8;
+      --text: #1B2B4B;
+      --text-muted: #6B7280;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 8px rgba(0,0,0,0.04);
+      --shadow: 0 2px 8px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 24px rgba(0,0,0,0.09);
+      --r: 12px;
+      --r-sm: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* ─── App Shell ─────────────────────────────────────────── */
+    .shell { display: flex; min-height: 100vh; }
+
+    /* ─── Sidebar ────────────────────────────────────────────── */
+    .sidebar {
+      width: 216px;
+      background: var(--navy);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    .sidebar-logo {
+      padding: 20px 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-logo-mark {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg { color: rgba(255,255,255,0.9); }
+
+    .logo-wordmark {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.2px;
+    }
+
+    .sidebar-section-label {
+      padding: 18px 20px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .sidebar-nav { list-style: none; padding: 0 10px; }
+
+    .sidebar-nav li { margin-bottom: 1px; }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .sidebar-nav a:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.06); }
+
+    .sidebar-nav a.active { color: white; background: rgba(255,255,255,0.11); }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-bottom a {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    /* ─── Main Area ──────────────────────────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    .topbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      height: 54px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+
+    .topbar-title { font-size: 14.5px; font-weight: 600; color: var(--navy); }
+
+    .topbar-divider { width: 1px; height: 16px; background: var(--border); }
+
+    .topbar-subtitle { font-size: 13px; color: var(--gray); }
+
+    .topbar-badge {
+      background: var(--teal-light);
+      color: var(--teal-dark);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 36px 60px;
+    }
+
+    /* ─── Progress ───────────────────────────────────────────── */
+    .progress-wrap {
+      max-width: 880px;
+      margin: 0 auto 36px;
+    }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .step-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .step-dot.active { background: var(--teal); color: white; }
+    .step-dot.done { background: var(--teal); color: white; }
+    .step-dot.idle { background: var(--gray-light); color: var(--gray); }
+
+    .step-name {
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+
+    .step-name.active { color: var(--teal-dark); }
+    .step-name.done { color: var(--teal-dark); }
+    .step-name.idle { color: var(--gray); }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      border-radius: 2px;
+      margin: 0 8px;
+      transition: background 0.4s;
+    }
+
+    .step-line.done { background: var(--teal); }
+    .step-line.idle { background: var(--gray-light); }
+
+    .progress-bar-track {
+      height: 3px;
+      background: var(--gray-light);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--teal);
+      border-radius: 3px;
+      transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── Stages ─────────────────────────────────────────────── */
+    .stage { display: none; max-width: 880px; margin: 0 auto; }
+    .stage.active { display: block; animation: rise 0.35s ease; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Stage Header ───────────────────────────────────────── */
+    .stage-header { margin-bottom: 28px; }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 6px;
+    }
+
+    .stage-title {
+      font-size: 27px;
+      font-weight: 740;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .stage-sub {
+      font-size: 14px;
+      color: var(--gray);
+      max-width: 540px;
+      line-height: 1.6;
+    }
+
+    /* ─── Info Banner ────────────────────────────────────────── */
+    .info-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--teal-light);
+      border: 1px solid var(--teal-mid);
+      border-radius: var(--r-sm);
+      padding: 11px 15px;
+      font-size: 13px;
+      color: var(--teal-dark);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    /* ─── Comparison Grid ────────────────────────────────────── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+    }
+
+    .compare-col { padding: 28px 30px; }
+
+    .compare-col.left { background: var(--card); border-right: 1px solid var(--border); }
+
+    .compare-col.right { background: #EDF8F7; }
+
+    .compare-source {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .compare-col.left .compare-source { color: var(--gray); }
+    .compare-col.right .compare-source { color: var(--teal-dark); }
+
+    .compare-heading {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 18px;
+    }
+
+    .hotel-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 3px;
+    }
+
+    .hotel-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .hotel-price em {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--gray);
+      font-style: normal;
+    }
+
+    .perk-list { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+
+    .perk-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; }
+
+    .perk-icon { flex-shrink: 0; margin-top: 1px; }
+    .perk-icon.x { color: #C4BBAD; }
+    .perk-icon.check { color: var(--teal); }
+
+    /* ─── Partner Cards ──────────────────────────────────────── */
+    .partner-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .partner-card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .program-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+    }
+
+    .badge-reserve { background: #EDE9FE; color: #5B21B6; }
+    .badge-preferred { background: #FEF3C7; color: #92400E; }
+    .badge-client { background: var(--teal-light); color: var(--teal-dark); }
+
+    .partner-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .partner-card p { font-size: 12.5px; color: var(--gray); line-height: 1.55; }
+
+    /* ─── Buttons ────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: var(--r-sm);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      text-decoration: none;
+      transition: all 0.18s;
+      line-height: 1.4;
+    }
+
+    .btn-primary { background: var(--teal); color: white; }
+    .btn-primary:hover { background: var(--teal-dark); box-shadow: 0 4px 14px rgba(26,158,143,0.3); transform: translateY(-1px); }
+
+    .btn-ghost { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.25); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.26); }
+
+    .btn-outline { background: transparent; color: var(--teal); border: 1.5px solid var(--teal-mid); }
+    .btn-outline:hover { background: var(--teal-light); border-color: var(--teal); }
+
+    .btn-outline.copied { background: var(--teal); color: white; border-color: var(--teal); }
+
+    .btn-lg { padding: 12px 26px; font-size: 14.5px; }
+    .btn-sm { padding: 7px 14px; font-size: 12.5px; }
+
+    .btn-full { width: 100%; justify-content: center; }
+
+    .row-end { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .row-center { display: flex; justify-content: center; margin-top: 0; }
+
+    /* ─── Form ───────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-field { margin-bottom: 22px; }
+    .form-field:last-child { margin-bottom: 0; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 5px;
+    }
+
+    .form-hint {
+      font-size: 11.5px;
+      color: var(--gray);
+      margin-bottom: 6px;
+      margin-top: -2px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 9px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      font-size: 13.5px;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .form-control:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(26,158,143,0.1);
+    }
+
+    .form-control::placeholder { color: #B8B0A5; }
+
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+      padding-right: 34px;
+    }
+
+    textarea.form-control { resize: vertical; min-height: 82px; }
+
+    /* ─── Value Prop Output ──────────────────────────────────── */
+    .vp-card {
+      background: var(--teal);
+      border-radius: var(--r);
+      padding: 28px 30px;
+      margin-top: 24px;
+      display: none;
+      animation: rise 0.4s ease;
+    }
+
+    .vp-card.show { display: block; }
+
+    .vp-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 10px;
+    }
+
+    .vp-text {
+      font-size: 16.5px;
+      font-weight: 500;
+      color: white;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    .vp-note { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 20px; }
+
+    /* ─── Stage 3 Client Grid ────────────────────────────────── */
+    .client-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .client-card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .client-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--teal-light);
+      color: var(--teal-dark);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .client-card .form-field { margin-bottom: 12px; }
+    .client-card .form-label { font-size: 12px; }
+    .client-card .form-control { font-size: 13px; padding: 8px 11px; }
+    .client-card textarea.form-control { min-height: 64px; }
+
+    /* ─── Output Cards ───────────────────────────────────────── */
+    .output-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+      animation: rise 0.4s ease;
+    }
+
+    .output-grid.show { display: grid; }
+
+    .output-card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1.5px solid var(--teal-mid);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .output-name { font-size: 13px; font-weight: 700; color: var(--navy); }
+
+    .output-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: var(--teal-light);
+      color: var(--teal-dark);
+      letter-spacing: 0.03em;
+    }
+
+    .output-msg {
+      flex: 1;
+      font-size: 12.5px;
+      color: var(--text);
+      line-height: 1.7;
+      background: var(--gray-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 13px 14px;
+      margin-bottom: 13px;
+      white-space: pre-line;
+    }
+
+    /* ─── Summary Card ───────────────────────────────────────── */
+    .summary-card {
+      display: none;
+      background: var(--navy);
+      border-radius: var(--r);
+      padding: 36px 32px;
+      text-align: center;
+      animation: rise 0.5s ease;
+      margin-bottom: 16px;
+    }
+
+    .summary-card.show { display: block; }
+
+    .summary-icon { font-size: 32px; margin-bottom: 14px; }
+
+    .summary-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .summary-card p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    /* ─── Section Label ──────────────────────────────────────── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--gray);
+      margin-bottom: 14px;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 26px 0; }
+
+    /* ─── Back button & row layouts ─────────────────────────── */
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .btn-back {
+      background: transparent;
+      color: var(--gray);
+      border: 1.5px solid var(--gray-light);
+      font-size: 13px;
+      padding: 9px 16px;
+    }
+
+    .btn-back:hover {
+      background: var(--gray-light);
+      color: var(--navy);
+      border-color: var(--gray-light);
+    }
+
+    /* ─── Step description sub-labels ───────────────────────── */
+    .step-text { display: flex; flex-direction: column; gap: 1px; }
+
+    .step-desc { display: none; }
+
+    /* ─── Niche filter pills (Stage 2) ──────────────────────── */
+    .niche-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+
+    .niche-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--gray);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .niche-pill:hover { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-light); }
+    .niche-pill.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+    /* ─── Property cards (Stage 2) ───────────────────────────── */
+    .prop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .prop-card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .prop-badge-row { margin-bottom: 10px; }
+
+    .prop-name { font-size: 14.5px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+
+    .prop-location { font-size: 12px; color: var(--gray); margin-bottom: 14px; display: flex; align-items: center; gap: 5px; }
+
+    .badge-amber { background: #FEF3C7; color: #92400E; }
+
+    .prop-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+
+    .prop-bullets li {
+      font-size: 12.5px;
+      color: var(--text);
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      line-height: 1.45;
+    }
+
+    .prop-bullets li::before {
+      content: '—';
+      color: var(--teal);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .prop-perks {
+      background: var(--teal-light);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: var(--teal-dark);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .prop-perks-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal-dark);
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .prop-footnote {
+      font-size: 12px;
+      color: var(--gray);
+      font-style: italic;
+      margin-bottom: 4px;
+    }
+
+    /* ─── Response scenario cards (Stage 5) ─────────────────── */
+    .response-stack { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+    .response-card {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .response-scenario {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .scenario-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal-dark);
+      background: var(--teal-light);
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .scenario-desc {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .response-msg-box {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.65;
+      background: var(--gray-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── Activity log (Stage 5) ─────────────────────────────── */
+    .log-section {
+      background: var(--card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .log-buttons { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+    .log-item { display: flex; align-items: center; gap: 9px; }
+
+    .log-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .log-btn:hover { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-light); }
+
+    .log-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--teal);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+
+    .log-count.bump { transform: scale(1.3); }
+
+    .logged-flash {
+      font-size: 11.5px;
+      color: var(--teal-dark);
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .logged-flash.show { opacity: 1; }
+
+    /* ─── Client selector (Stage 5) ─────────────────────────── */
+    .client-select-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .client-select-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: var(--r);
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .client-select-btn:hover { border-color: var(--teal); background: var(--teal-light); }
+
+    .client-select-btn.active {
+      border-color: var(--teal);
+      background: var(--teal-light);
+      color: var(--teal-dark);
+    }
+
+    .cs-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--gray-light);
+      color: var(--gray);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .client-select-btn.active .cs-num { background: var(--teal); color: white; }
+
+    /* ─── Sidekick 2.0 card (Stage 5) ───────────────────────── */
+    .sidekick-card {
+      border: 1.5px solid var(--navy);
+      background: #F4F6FA;
+    }
+
+    .scenario-label-sk {
+      background: var(--navy);
+      color: rgba(255,255,255,0.9);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .btn-sidekick {
+      width: 100%;
+      justify-content: center;
+      background: var(--navy);
+      color: white;
+      border: none;
+      font-size: 13px;
+      padding: 10px 20px;
+      margin-top: 2px;
+    }
+
+    .btn-sidekick:hover { background: var(--navy-mid); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(27,43,75,0.25); }
+
+    .sidekick-output { display: none; margin-top: 12px; animation: rise 0.3s ease; }
+    .sidekick-output.show { display: block; }
+
+    .sidekick-result {
+      background: var(--navy);
+      border-radius: var(--r-sm);
+      padding: 14px 16px;
+    }
+
+    .sidekick-result-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 8px;
+    }
+
+    .sidekick-result-text {
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.92);
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+
+    /* ─── Program filter tabs (Stage 2) ─────────────────────── */
+    .prog-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+
+    .prog-tab {
+      padding: 7px 15px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--gray);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .prog-tab:hover { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-light); }
+    .prog-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+    .badge-cruise { background: #DBEAFE; color: #1E40AF; }
+
+    /* ─── Final summary card (Stage 5) ───────────────────────── */
+    .final-summary {
+      background: var(--navy);
+      border-radius: var(--r);
+      padding: 28px 32px;
+      text-align: center;
+    }
+
+    .final-summary h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .final-summary p {
+      font-size: 13.5px;
+      color: rgba(255,255,255,0.65);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ─── Sidebar ─────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">
+        <div class="logo-icon">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="logo-wordmark">fora</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">My Business</div>
+    <ul class="sidebar-nav">
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Trips
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Clients
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        Payments
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Invoices
+      </a></li>
+    </ul>
+
+    <div class="sidebar-section-label">Tools</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Confidence and Pitch Builder
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Book Travel
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Lists
+      </a></li>
+    </ul>
+
+    <div class="sidebar-section-label">Resources</div>
+    <ul class="sidebar-nav">
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Partner Programs
+      </a></li>
+      <li><a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Get Help
+      </a></li>
+    </ul>
+
+    <div class="sidebar-bottom">
+      <a href="#">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        My Profile
+      </a>
+    </div>
+  </nav>
+
+  <!-- ─── Main ─────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">Confidence and Pitch Builder</span>
+        <div class="topbar-divider"></div>
+        <span class="topbar-subtitle">Your guided path to your first client conversation</span>
+      </div>
+      <span class="topbar-badge">Tool 3 of 3</span>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-steps">
+          <div class="step-pill">
+            <div class="step-dot active" id="dot-1">1</div>
+            <div class="step-text">
+              <span class="step-name active" id="name-1">Your Niche</span>
+              <span class="step-desc active" id="desc-1">What you offer vs. booking alone</span>
+            </div>
+          </div>
+          <div class="step-line idle" id="line-1"></div>
+          <div class="step-pill">
+            <div class="step-dot idle" id="dot-2">2</div>
+            <div class="step-text">
+              <span class="step-name idle" id="name-2">Know Your Suppliers</span>
+              <span class="step-desc" id="desc-2">Key properties for your niche</span>
+            </div>
+          </div>
+          <div class="step-line idle" id="line-2"></div>
+          <div class="step-pill">
+            <div class="step-dot idle" id="dot-3">3</div>
+            <div class="step-text">
+              <span class="step-name idle" id="name-3">Compare</span>
+              <span class="step-desc" id="desc-3">Side-by-side for your chosen property</span>
+            </div>
+          </div>
+          <div class="step-line idle" id="line-3"></div>
+          <div class="step-pill">
+            <div class="step-dot idle" id="dot-4">4</div>
+            <div class="step-text">
+              <span class="step-name idle" id="name-4">Generate Outreach</span>
+              <span class="step-desc" id="desc-4">Personalized messages for 3 contacts</span>
+            </div>
+          </div>
+          <div class="step-line idle" id="line-4"></div>
+          <div class="step-pill">
+            <div class="step-dot idle" id="dot-5">5</div>
+            <div class="step-text">
+              <span class="step-name idle" id="name-5">Handle the Response</span>
+              <span class="step-desc" id="desc-5">Follow-ups for every scenario</span>
+            </div>
+          </div>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="prog-fill" style="width:14%"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- STAGE 1 — Your Niche                               -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="stage active" id="stage-1">
+
+        <div class="stage-header">
+          <div class="eyebrow">Stage 1 of 5</div>
+          <h1 class="stage-title">Let's define your niche.</h1>
+          <p class="stage-sub">Your niche is your superpower. Tell us what kind of travel you specialize in and we'll give you a one-sentence positioning statement you'll actually use.</p>
+        </div>
+
+        <div class="card">
+          <div class="form-field">
+            <label class="form-label" for="f-type">What is your travel niche?</label>
+            <div class="form-hint">This defines who you serve and what you're known for.</div>
+            <select class="form-control" id="f-type">
+              <option value="">Choose your niche...</option>
+              <option value="luxury">Luxury &amp; Honeymoons</option>
+              <option value="family">Family Vacations</option>
+              <option value="adventure">Adventure &amp; Outdoors</option>
+              <option value="business">Business Travel</option>
+              <option value="cultural">Cultural &amp; History</option>
+              <option value="beach">Beach &amp; Relaxation</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="f-dest">What destinations are you most knowledgeable about?</label>
+            <div class="form-hint">Real experience is your biggest credibility advantage — be specific.</div>
+            <input type="text" class="form-control" id="f-dest" placeholder="e.g. Maldives, Italy, Japan, Turks &amp; Caicos...">
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="f-trip">Tell us about one trip in your niche that you know inside and out.</label>
+            <div class="form-hint">This becomes your story — the thing that proves you're not just reading from a brochure.</div>
+            <textarea class="form-control" id="f-trip" placeholder="e.g. My honeymoon at the Four Seasons Bora Bora — I can describe every detail from the overwater bungalow to snorkeling right off the deck..."></textarea>
+          </div>
+        </div>
+
+        <div class="row-end" style="margin-top:20px;">
+          <button class="btn btn-primary btn-lg" onclick="genNiche()">
+            Generate My Niche
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </button>
+        </div>
+
+        <!-- Niche Statement Output -->
+        <div class="vp-card" id="vp-card">
+          <div class="vp-label">Your Niche</div>
+          <div class="vp-text" id="vp-text"></div>
+          <div class="vp-note">One sentence. Use this when introducing yourself as a travel advisor — in person, on LinkedIn, or in any outreach.</div>
+          <button class="btn btn-ghost" onclick="goStage(2)">
+            See Suppliers in Your Niche
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /stage-1 -->
+
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- STAGE 2 — Know Your Suppliers                      -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="stage" id="stage-2">
+
+        <div class="stage-header">
+          <div class="eyebrow">Stage 2 of 5</div>
+          <h1 class="stage-title">Know your suppliers before you make your pitch.</h1>
+          <p class="stage-sub">Pick your niche, then click a property to see a personalized side-by-side comparison you can use in any conversation.</p>
+        </div>
+
+        <div class="section-label">Program type</div>
+        <div class="prog-tabs" id="prog-tabs">
+          <button class="prog-tab active" data-prog="all" onclick="setProgram('all', this)">All Programs</button>
+          <button class="prog-tab" data-prog="reserve" onclick="setProgram('reserve', this)">✦ Hotel Reserve</button>
+          <button class="prog-tab" data-prog="preferred" onclick="setProgram('preferred', this)">★ Hotel Partners</button>
+          <button class="prog-tab" data-prog="cruise" onclick="setProgram('cruise', this)">⚓ Cruise</button>
+        </div>
+
+        <div class="section-label">Your niche</div>
+        <div class="niche-pills" id="niche-pills">
+          <button class="niche-pill active" data-niche="luxury" onclick="setNiche('luxury', this)">Luxury &amp; Honeymoons</button>
+          <button class="niche-pill" data-niche="family" onclick="setNiche('family', this)">Family Vacations</button>
+          <button class="niche-pill" data-niche="business" onclick="setNiche('business', this)">Business Travel</button>
+          <button class="niche-pill" data-niche="adventure" onclick="setNiche('adventure', this)">Adventure &amp; Outdoors</button>
+          <button class="niche-pill" data-niche="beach" onclick="setNiche('beach', this)">Beach &amp; Relaxation</button>
+          <button class="niche-pill" data-niche="cultural" onclick="setNiche('cultural', this)">Cultural &amp; History</button>
+        </div>
+
+        <div class="section-label" style="margin-top:26px;">Click a property to compare</div>
+        <div class="prop-grid" id="prop-grid"><!-- populated by JS --></div>
+
+        <p class="prop-footnote">These are just a starting point. Explore the full partner network in the Partners section of your portal.</p>
+
+        <div class="row-between" style="margin-top:20px;">
+          <button class="btn btn-back" onclick="goStage(1)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+        </div>
+
+      </div><!-- /stage-2 -->
+
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- STAGE 3 — Compare                                  -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="stage" id="stage-3">
+
+        <div class="stage-header">
+          <div class="eyebrow">Stage 3 of 5</div>
+          <h1 class="stage-title">This is your unfair advantage.</h1>
+          <p class="stage-sub">Same hotel. Same price. Here's exactly what your client gets booking through you — and what they miss out on booking alone.</p>
+        </div>
+
+        <div class="info-banner">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          These perks are exclusive to Fora's preferred partner and reserve programs — your clients cannot access them by booking directly.
+        </div>
+
+        <!-- Populated by JS when a property is clicked in stage 2 -->
+        <div id="comparison-container"></div>
+
+        <div class="row-between" style="margin-top:28px;">
+          <button class="btn btn-back" onclick="goStage(2)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+          <button class="btn btn-primary btn-lg" onclick="goStage(4)">
+            Continue to Generate Outreach
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /stage-3 -->
+
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- STAGE 4 — Generate Your Outreach                   -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="stage" id="stage-4">
+
+        <div class="stage-header">
+          <div class="eyebrow">Stage 4 of 5</div>
+          <h1 class="stage-title">Your first booking could be one message away.</h1>
+          <p class="stage-sub">Add up to three people from your network. Give us a little context and we'll write a personalized outreach message you can send today.</p>
+        </div>
+
+        <div class="section-label">Add people from your network</div>
+
+        <div class="client-grid">
+
+          <!-- Client 1 -->
+          <div class="client-card">
+            <div class="client-num">1</div>
+            <div class="form-field">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" id="c1-name" value="Sarah" placeholder="First name">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Your relationship</label>
+              <input type="text" class="form-control" id="c1-rel" value="Best friend" placeholder="Friend, coworker, family...">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Travel context</label>
+              <textarea class="form-control" id="c1-ctx">Just got engaged, planning a honeymoon</textarea>
+            </div>
+          </div>
+
+          <!-- Client 2 -->
+          <div class="client-card">
+            <div class="client-num">2</div>
+            <div class="form-field">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" id="c2-name" value="Marcus" placeholder="First name">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Your relationship</label>
+              <input type="text" class="form-control" id="c2-rel" value="Coworker" placeholder="Friend, coworker, family...">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Travel context</label>
+              <textarea class="form-control" id="c2-ctx">Mentioned wanting to visit Japan next spring</textarea>
+            </div>
+          </div>
+
+          <!-- Client 3 -->
+          <div class="client-card">
+            <div class="client-num">3</div>
+            <div class="form-field">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" id="c3-name" value="Aunt Lisa" placeholder="First name">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Your relationship</label>
+              <input type="text" class="form-control" id="c3-rel" value="Family" placeholder="Friend, coworker, family...">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Travel context</label>
+              <textarea class="form-control" id="c3-ctx">Planning a beach vacation with kids this summer</textarea>
+            </div>
+          </div>
+
+        </div><!-- /client-grid -->
+
+        <div class="row-between" style="margin-bottom: 28px;">
+          <button class="btn btn-back" onclick="goStage(3)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+          <button class="btn btn-primary btn-lg" onclick="genMessages()">
+            Generate My Messages
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </button>
+        </div>
+
+        <!-- Output Cards -->
+        <div class="output-grid" id="output-grid">
+
+          <div class="output-card">
+            <div class="output-header">
+              <span class="output-name" id="o1-name">Sarah</span>
+              <span class="output-tag">Honeymoon</span>
+            </div>
+            <div class="output-msg" id="o1-msg"></div>
+            <button class="btn btn-outline btn-sm btn-full" onclick="copyMsg(1, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Message
+            </button>
+          </div>
+
+          <div class="output-card">
+            <div class="output-header">
+              <span class="output-name" id="o2-name">Marcus</span>
+              <span class="output-tag">Japan</span>
+            </div>
+            <div class="output-msg" id="o2-msg"></div>
+            <button class="btn btn-outline btn-sm btn-full" onclick="copyMsg(2, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Message
+            </button>
+          </div>
+
+          <div class="output-card">
+            <div class="output-header">
+              <span class="output-name" id="o3-name">Aunt Lisa</span>
+              <span class="output-tag">Family Travel</span>
+            </div>
+            <div class="output-msg" id="o3-msg"></div>
+            <button class="btn btn-outline btn-sm btn-full" onclick="copyMsg(3, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Message
+            </button>
+          </div>
+
+        </div><!-- /output-grid -->
+
+        <!-- Summary -->
+        <div class="summary-card" id="summary-card">
+          <div class="summary-icon">✦</div>
+          <h3>Your messages are ready to send.</h3>
+          <p>You now have three personalized outreach messages ready to go. One more step — let's make sure you know what to say when they reply.</p>
+          <div style="margin-top:20px;">
+            <button class="btn btn-ghost" onclick="goStage(5)">
+              Continue to Handle the Response
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /stage-4 -->
+
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- STAGE 5 — Handle the Response                      -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="stage" id="stage-5">
+
+        <div class="stage-header">
+          <div class="eyebrow">Stage 5 of 5</div>
+          <h1 class="stage-title">What if they reply? Here's what to say.</h1>
+          <p class="stage-sub">Select a contact, then pick the scenario that matches their reply — we'll give you the perfect response, personalized to them.</p>
+        </div>
+
+        <!-- Client selector -->
+        <div class="section-label">Who replied?</div>
+        <div class="client-select-row">
+          <button class="client-select-btn active" id="cs-1" onclick="selectClient(1)">
+            <span class="cs-num">1</span>
+            <span class="cs-name" id="cs-name-1">Sarah</span>
+          </button>
+          <button class="client-select-btn" id="cs-2" onclick="selectClient(2)">
+            <span class="cs-num">2</span>
+            <span class="cs-name" id="cs-name-2">Marcus</span>
+          </button>
+          <button class="client-select-btn" id="cs-3" onclick="selectClient(3)">
+            <span class="cs-num">3</span>
+            <span class="cs-name" id="cs-name-3">Aunt Lisa</span>
+          </button>
+        </div>
+
+        <!-- Response scenario cards -->
+        <div class="section-label">Their response</div>
+        <div class="response-stack">
+
+          <!-- Card 1 -->
+          <div class="response-card">
+            <div class="response-scenario">
+              <span class="scenario-label">Scenario 1</span>
+              <span class="scenario-desc">"I'm not really traveling right now..."</span>
+            </div>
+            <div class="response-msg-box" id="resp-msg-1"></div>
+            <button class="btn btn-outline btn-sm" onclick="copyResp(1, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Response
+            </button>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="response-card">
+            <div class="response-scenario">
+              <span class="scenario-label">Scenario 2</span>
+              <span class="scenario-desc">"I usually just book on Expedia..."</span>
+            </div>
+            <div class="response-msg-box" id="resp-msg-2"></div>
+            <button class="btn btn-outline btn-sm" onclick="copyResp(2, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Response
+            </button>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="response-card">
+            <div class="response-scenario">
+              <span class="scenario-label">Scenario 3</span>
+              <span class="scenario-desc">"Interesting! Tell me more..."</span>
+            </div>
+            <div class="response-msg-box" id="resp-msg-3"></div>
+            <button class="btn btn-outline btn-sm" onclick="copyResp(3, this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy Response
+            </button>
+          </div>
+
+          <!-- Card 4 — Sidekick 2.0 -->
+          <div class="response-card sidekick-card">
+            <div class="response-scenario">
+              <span class="scenario-label-sk">✦ Sidekick 2.0</span>
+              <span class="scenario-desc">They said something else...</span>
+            </div>
+            <div class="form-field" style="margin-bottom:10px;">
+              <label class="form-label" style="font-size:12px;">Paste what they said</label>
+              <textarea class="form-control" id="sidekick-input" rows="3" placeholder="e.g. &quot;We're actually thinking about doing a safari for our anniversary next year...&quot;"></textarea>
+            </div>
+            <button class="btn btn-sidekick" onclick="genSidekick()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Ask Sidekick 2.0
+            </button>
+            <div class="sidekick-output" id="sidekick-output"></div>
+          </div>
+
+        </div><!-- /response-stack -->
+
+        <!-- Activity log -->
+        <div class="log-section">
+          <div class="section-label" style="margin-bottom:16px;">Log your activity</div>
+          <div class="log-buttons">
+            <div class="log-item">
+              <button class="log-btn" onclick="logActivity('sent')">
+                Message Sent
+                <span class="log-count" id="count-sent">0</span>
+              </button>
+              <span class="logged-flash" id="flash-sent">Logged</span>
+            </div>
+            <div class="log-item">
+              <button class="log-btn" onclick="logActivity('pos')">
+                Positive Reply
+                <span class="log-count" id="count-pos">0</span>
+              </button>
+              <span class="logged-flash" id="flash-pos">Logged</span>
+            </div>
+            <div class="log-item">
+              <button class="log-btn" onclick="logActivity('neg')">
+                Negative Reply
+                <span class="log-count" id="count-neg">0</span>
+              </button>
+              <span class="logged-flash" id="flash-neg">Logged</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final summary -->
+        <div class="final-summary">
+          <div class="summary-icon" style="font-size:28px; margin-bottom:12px;">✦</div>
+          <h3>You are ready.</h3>
+          <p>You know your value. You know your suppliers. You have your pitch. You have your follow-ups. Your first booking could be one conversation away.</p>
+        </div>
+
+        <div style="margin-top:20px;">
+          <button class="btn btn-back" onclick="goStage(4)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+        </div>
+
+      </div><!-- /stage-5 -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+  // ─── State ─────────────────────────────────────────────────
+  let current = 1;
+  let activeNiche = 'luxury';
+  let activeProgram = 'all';
+  let currentPropPool = [];
+  let selectedClient = 1;
+  let selectedProperty = null;
+
+  const typeMap = {
+    luxury:    'luxury travel and honeymoons',
+    family:    'family vacations',
+    adventure: 'adventure and outdoor travel',
+    business:  'business travel',
+    cultural:  'cultural and historical travel',
+    beach:     'beach and relaxation travel'
+  };
+
+  // ─── Property data ──────────────────────────────────────────
+  const PROPERTIES = {
+    luxury: [
+      { name: 'Gili Lankanfushi', location: 'Maldives', badge: 'reserve', price: '$1,200',
+        bullets: ['Overwater villa resort in a pristine private lagoon', 'No shoes, no news — total barefoot luxury policy', 'Ideal for romantic getaways and honeymooners'],
+        perks: 'Daily breakfast for two · $100 resort credit · Room upgrade on arrival' },
+      { name: 'Rosewood Kona Village', location: 'Hawaii, USA', badge: 'preferred', price: '$950',
+        bullets: ['Beachfront bungalows on the Kohala Coast', 'One of the most private luxury resorts in the US', 'Great for US-based couples wanting a short-haul honeymoon'],
+        perks: 'Complimentary welcome amenity · Resort credit · Room upgrade' },
+      { name: 'Four Seasons Resort Bora Bora', location: 'French Polynesia', badge: 'preferred', price: '$1,100',
+        bullets: ['Iconic overwater bungalows above a turquoise lagoon', 'Classic honeymoon destination with world-class service', 'Exclusive perks through the Four Seasons Preferred program'],
+        perks: 'Breakfast included · Spa credit · Early check-in / late check-out' }
+    ],
+    family: [
+      { name: 'Excellence Playa Mujeres', location: 'Mexico', badge: 'reserve', price: '$480',
+        bullets: ['Excellence Club adults-only wing within a family resort', 'Dedicated kids club with full-day programming', 'All-inclusive with family suite options'],
+        perks: 'All-inclusive · Room upgrade · Welcome amenity' },
+      { name: 'Beaches Turks and Caicos', location: 'Turks and Caicos', badge: 'preferred', price: '$650',
+        bullets: ['Caribbean all-inclusive with a waterpark on property', 'Multiple dining options for every family preference', 'Suite categories designed specifically for families'],
+        perks: 'All-inclusive · Complimentary family activities · Resort credit' },
+      { name: 'Four Seasons Resort Orlando', location: 'Orlando, Florida', badge: 'preferred', price: '$580',
+        bullets: ['Disney area location with complimentary resort activities', 'Water park on property — no theme park needed', 'Family concierge for Disney planning and dining reservations'],
+        perks: 'Breakfast included · Resort credit · Complimentary resort activities' }
+    ],
+    business: [
+      { name: 'Rosewood London', location: 'London, UK', badge: 'preferred', price: '$720',
+        bullets: ['Prime Holborn location, central to City and West End', 'Dedicated business lounge with private meeting facilities', 'Preferred program unlocks breakfast and upgrade automatically'],
+        perks: 'Complimentary breakfast · Room upgrade · Upgraded WiFi' },
+      { name: 'The Peninsula Chicago', location: 'Chicago, Illinois', badge: 'reserve', price: '$550',
+        bullets: ['Michigan Avenue address, walkable to financial district', 'In-room technology suite and business-grade amenities', 'Complimentary pressing on arrival — arrive looking sharp'],
+        perks: 'Complimentary pressing · Room upgrade · Business center access' },
+      { name: 'Four Seasons Hotel New York Downtown', location: 'New York, USA', badge: 'preferred', price: '$680',
+        bullets: ['Financial District location, close to Wall Street', 'State-of-the-art meeting facilities and boardrooms', 'Streamlined checkout and exclusive in-room amenities'],
+        perks: 'Complimentary minibar · Express checkout · Room upgrade' }
+    ],
+    adventure: [
+      { name: 'Singita Grumeti', location: 'Tanzania', badge: 'reserve', price: '$2,200',
+        bullets: ['Private 350,000-acre game reserve — no crowds, only wildlife', 'Guided safari activities included in the all-in rate', 'Conservation fee covered — guests directly protect wildlife'],
+        perks: 'All meals and drinks · Guided safaris · Conservation contribution covered' },
+      { name: 'Clayoquot Wilderness Lodge', location: 'British Columbia, Canada', badge: 'preferred', price: '$1,800',
+        bullets: ['Fly-in resort accessible only by floatplane or boat', 'All expedition activities included — kayaking, hiking, surfing', 'Gourmet meals prepared with locally foraged ingredients'],
+        perks: 'All activities included · Gourmet dining · Expert expedition guides' },
+      { name: 'Six Senses Zil Pasyon', location: 'Félicité Island, Seychelles', badge: 'preferred', price: '$1,400',
+        bullets: ['Private island resort accessible by helicopter or speedboat', 'World-class snorkeling and water sports on granite-boulder beach', 'Resident wellness practitioners and full spa program'],
+        perks: 'Water sports included · Wellness program · Snorkeling equipment' }
+    ]
+  };
+  PROPERTIES.beach    = PROPERTIES.luxury;
+  PROPERTIES.cultural = PROPERTIES.luxury;
+
+  // ─── Cruise partner data ────────────────────────────────────
+  const CRUISES = [
+    { name: 'Silversea Cruises', location: 'Worldwide', badge: 'cruise', price: '$800',
+      bullets: ['Ultra-luxury all-inclusive ocean and expedition cruises', 'Fares include shore excursions, beverages, and butler service', 'Best for luxury travelers and destination deep-divers'],
+      perks: 'Shipboard credit · Complimentary shore excursion · Pre-cruise hotel night' },
+    { name: 'Regent Seven Seas Cruises', location: 'Worldwide', badge: 'cruise', price: '$1,100',
+      bullets: ['All-inclusive luxury cruise line — everything truly included', 'Free unlimited shore excursions at every port of call', 'Ideal for clients who want to see the world without planning every detail'],
+      perks: 'All-inclusive fare · Unlimited excursions · Business class airfare' },
+    { name: 'Seabourn', location: 'Worldwide', badge: 'cruise', price: '$900',
+      bullets: ['Intimate small-ship cruising with 300–500 guests per voyage', 'Open bar, fine dining, and water sports platform included', 'Excellent for clients who want a boutique, non-mass-market experience'],
+      perks: 'Complimentary beverages · Shipboard credit · Watersports included' }
+  ];
+
+  // ─── Navigation ────────────────────────────────────────────
+  function goStage(n) {
+    document.getElementById('stage-' + current).classList.remove('active');
+    current = n;
+    document.getElementById('stage-' + current).classList.add('active');
+    document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
+    updateProgress(n);
+    // When entering Stage 2 (Know Your Suppliers), sync niche from Stage 1 and render
+    if (n === 2) {
+      const sel = document.getElementById('f-type');
+      if (sel && sel.value) {
+        activeNiche = sel.value;
+        document.querySelectorAll('.niche-pill').forEach(p => {
+          p.classList.toggle('active', p.dataset.niche === activeNiche);
+        });
+      }
+      renderSuppliers();
+    }
+    // When entering Stage 3 (Compare), render comparison for selected property (default to first luxury)
+    if (n === 3) renderComparison(selectedProperty || PROPERTIES.luxury[0]);
+    // When entering Stage 5, populate client names from Stage 4 and render initial responses
+    if (n === 5) {
+      const names = [v('c1-name') || 'Contact 1', v('c2-name') || 'Contact 2', v('c3-name') || 'Contact 3'];
+      names.forEach((name, i) => {
+        const el = document.getElementById('cs-name-' + (i + 1));
+        if (el) el.textContent = name;
+      });
+      selectClient(selectedClient);
+    }
+  }
+
+  function updateProgress(n) {
+    const pct = { 1: 8, 2: 28, 3: 52, 4: 74, 5: 100 };
+    document.getElementById('prog-fill').style.width = pct[n] + '%';
+
+    for (let i = 1; i <= 5; i++) {
+      const dot  = document.getElementById('dot-'  + i);
+      const lbl  = document.getElementById('name-' + i);
+      const desc = document.getElementById('desc-' + i);
+      if (i < n) {
+        dot.className   = 'step-dot done';
+        dot.innerHTML   = '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
+        lbl.className   = 'step-name done';
+        desc.className  = 'step-desc done';
+      } else if (i === n) {
+        dot.className   = 'step-dot active';
+        dot.textContent = i;
+        lbl.className   = 'step-name active';
+        desc.className  = 'step-desc active';
+      } else {
+        dot.className   = 'step-dot idle';
+        dot.textContent = i;
+        lbl.className   = 'step-name idle';
+        desc.className  = 'step-desc';
+      }
+    }
+
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('line-' + i).className =
+        'step-line ' + (i < n ? 'done' : 'idle');
+    }
+  }
+
+  // ─── Stage 2: Niche pills, program tabs & property cards ───
+  function setNiche(niche, btn) {
+    activeNiche = niche;
+    document.querySelectorAll('.niche-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    renderSuppliers();
+  }
+
+  function setProgram(prog, btn) {
+    activeProgram = prog;
+    document.querySelectorAll('.prog-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderSuppliers();
+  }
+
+  function renderSuppliers() {
+    const nicheProps = PROPERTIES[activeNiche] || PROPERTIES.luxury;
+    let pool = [];
+    if (activeProgram === 'cruise') {
+      pool = CRUISES;
+    } else if (activeProgram === 'reserve') {
+      pool = nicheProps.filter(p => p.badge === 'reserve');
+    } else if (activeProgram === 'preferred') {
+      pool = nicheProps.filter(p => p.badge === 'preferred');
+    } else {
+      pool = [...nicheProps, ...CRUISES];
+    }
+    currentPropPool = pool;
+    const grid = document.getElementById('prop-grid');
+    if (pool.length === 0) {
+      grid.innerHTML = '<p style="color:var(--gray);font-size:13px;padding:12px 0;">No properties found for this combination.</p>';
+      return;
+    }
+    grid.innerHTML = pool.map((p, idx) => {
+      let badgeClass, badgeLabel;
+      if (p.badge === 'reserve')        { badgeClass = 'badge-amber';  badgeLabel = '✦ Fora Reserve'; }
+      else if (p.badge === 'preferred') { badgeClass = 'badge-client'; badgeLabel = '★ Preferred Partner'; }
+      else                               { badgeClass = 'badge-cruise'; badgeLabel = '⚓ Cruise Partner'; }
+      return `
+        <div class="prop-card">
+          <div class="prop-badge-row">
+            <span class="program-badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <div class="prop-name">${p.name}</div>
+          <div class="prop-location">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            ${p.location}
+          </div>
+          <ul class="prop-bullets">
+            ${p.bullets.map(b => `<li>${b}</li>`).join('')}
+          </ul>
+          <div class="prop-perks">
+            <div class="prop-perks-label">Client perks</div>
+            ${p.perks}
+          </div>
+          <button class="btn btn-outline btn-sm btn-full" style="margin-top:14px;" onclick="selectProp(${idx})">
+            See my client advantage →
+          </button>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── Select property → render comparison → go to stage 3 ───
+  function selectProp(idx) {
+    selectedProperty = currentPropPool[idx];
+    goStage(3);
+  }
+
+  function renderComparison(prop) {
+    const xSVG   = `<svg class="perk-icon x" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+    const chkSVG = `<svg class="perk-icon check" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>`;
+    const isCruise = prop.badge === 'cruise';
+    const priceSuffix = isCruise ? '/ day' : '/ night';
+    const leftHeading = isCruise ? 'Booking directly with the cruise line' : 'Booking on Google or Expedia';
+    const without = isCruise ? [
+      'Standard cabin, no upgrades guaranteed',
+      'Shore excursions at full retail price',
+      'No onboard credit or bonus inclusions',
+      'No advocate if something goes wrong',
+      'No insider knowledge on itinerary or ports',
+      'Customer service queue when issues arise'
+    ] : [
+      'Standard room, no upgrades guaranteed',
+      'No complimentary breakfast',
+      'No resort or hotel credit',
+      'No advocate if something goes wrong',
+      'Generic algorithm recommendations',
+      'Customer service queue when issues arise'
+    ];
+    const withPerks = [
+      ...prop.perks.split(' · '),
+      'A personal advocate in your corner',
+      'Recommendations tailored to their travel style',
+      'VIP status that cannot be booked anywhere else'
+    ];
+    document.getElementById('comparison-container').innerHTML = `
+      <div class="compare-grid">
+        <div class="compare-col left">
+          <div class="compare-source">Without an advisor</div>
+          <div class="compare-heading">${leftHeading}</div>
+          <div class="hotel-label">${prop.name}</div>
+          <div class="hotel-price">${prop.price} <em>${priceSuffix}</em></div>
+          <ul class="perk-list">${without.map(t => `<li class="perk-item">${xSVG}${t}</li>`).join('')}</ul>
+        </div>
+        <div class="compare-col right">
+          <div class="compare-source">✦ With your Fora advisor</div>
+          <div class="compare-heading">Booking through you</div>
+          <div class="hotel-label">${prop.name}</div>
+          <div class="hotel-price">${prop.price} <em>${priceSuffix} — same price</em></div>
+          <ul class="perk-list">${withPerks.map(t => `<li class="perk-item">${chkSVG}${t}</li>`).join('')}</ul>
+        </div>
+      </div>`;
+  }
+
+  // Initialize on load
+  renderSuppliers();
+
+  // ─── Stage 1: Generate Niche Statement ─────────────────────
+  function genNiche() {
+    const dest = document.getElementById('f-dest').value.trim() || 'top destinations worldwide';
+    const type = document.getElementById('f-type').value;
+    const niches = {
+      luxury:    `I'm a luxury travel advisor specializing in honeymoons and high-end escapes — with first-hand experience in places like ${dest}, I can unlock exclusive perks at the world's best hotels at the exact same price you'd find online.`,
+      family:    `I plan family vacations that actually work — from kids clubs to suite upgrades — with personal knowledge of destinations like ${dest} and access to preferred-partner perks you can't get booking on your own.`,
+      adventure: `I specialize in adventure travel and expedition-style trips — drawing on first-hand experience in places like ${dest} — with access to lodges and boutique properties most travelers never discover.`,
+      business:  `I book business travel for professionals who care about the details — the right hotel, the right location, the right perks — with first-hand knowledge of cities like ${dest} and preferred-partner access to top properties.`,
+      cultural:  `I design cultural and historical itineraries with depth you can't get from a search engine, with personal knowledge of places like ${dest} and preferred-partner access to top properties.`,
+      beach:     `I specialize in beach and relaxation travel — with first-hand knowledge of hidden gems and full-service resorts in places like ${dest} — and I can unlock exclusive perks at no extra cost to you.`
+    };
+    const stmt = niches[type] || `I'm a travel advisor with personal experience in destinations like ${dest} — through Fora's preferred partner network, I can unlock exclusive perks at the same price you'd find anywhere online.`;
+    document.getElementById('vp-text').textContent = stmt;
+    const card = document.getElementById('vp-card');
+    card.classList.add('show');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
+  }
+
+  // ─── Stage 3: Generate Pitch (kept for internal use) ───────
+  function genPitch() {
+    const dest = document.getElementById('f-dest').value.trim() || 'a variety of destinations';
+    const type = document.getElementById('f-type').value;
+    const typeLabel = typeMap[type] || 'travel';
+
+    let s1, s2;
+
+    if (type === 'luxury') {
+      s1 = `I specialize in ${typeLabel} with first-hand experience in destinations like ${dest} — I know the difference between a good hotel and one that genuinely makes a trip unforgettable.`;
+      s2 = `Through Fora, I can access exclusive perks at top luxury properties — complimentary breakfast, room upgrades, and resort credits — at the exact same rate you'd find online.`;
+    } else if (type === 'family') {
+      s1 = `I focus on ${typeLabel} and know how to design trips that actually work for real families, with personal experience in places like ${dest}.`;
+      s2 = `Through Fora's preferred partner network, I can put your family in top resorts with kids clubs, meal inclusions, and perks like complimentary breakfast and suite upgrades — at the same price as booking direct.`;
+    } else if (type === 'adventure') {
+      s1 = `I specialize in ${typeLabel}, with boots-on-the-ground experience in destinations like ${dest} — I know which operators are worth it and which ones aren't.`;
+      s2 = `Through Fora, I access preferred rates and exclusive amenities at lodges and boutique hotels that most travelers don't even know exist, at the same price as booking on your own.`;
+    } else if (type === 'cultural') {
+      s1 = `I plan ${typeLabel} with personal experience exploring places like ${dest} — the kind of depth and local insight you can't get from a search engine.`;
+      s2 = `Through Fora's partner network, I can connect you with preferred hotels and curated local experiences at the same price as booking directly, with perks already built in.`;
+    } else if (type === 'beach') {
+      s1 = `I specialize in ${typeLabel} with first-hand knowledge of destinations like ${dest} — from hidden boutique hideaways to full-service all-inclusive resorts.`;
+      s2 = `Through Fora's preferred partners, I can unlock exclusive perks like resort credits and complimentary breakfast at top beach properties — at no extra cost to you.`;
+    } else if (type === 'business') {
+      s1 = `I specialize in ${typeLabel} and understand that the details — the right hotel, the right location, the right perks — are what make or break a work trip, drawing on my experience in places like ${dest}.`;
+      s2 = `Through Fora's preferred partner network, I can book you into top business hotels with complimentary upgrades and amenities at the same rate you'd find on any corporate platform.`;
+    } else {
+      s1 = `I'm a travel advisor with personal experience in destinations like ${dest}, and I help people travel smarter without spending more.`;
+      s2 = `Through Fora, I access preferred partner hotels and exclusive perks — room upgrades, resort credits, complimentary breakfast — at the exact same price you'd find online.`;
+    }
+
+    document.getElementById('vp-text').textContent = s1 + ' ' + s2;
+    const card = document.getElementById('vp-card');
+    card.classList.add('show');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
+  }
+
+  // ─── Stage 4: Generate Messages ────────────────────────────
+  function genMessages() {
+    const n1  = v('c1-name') || 'Sarah';
+    const n2  = v('c2-name') || 'Marcus';
+    const n3  = v('c3-name') || 'Aunt Lisa';
+
+    document.getElementById('o1-name').textContent = n1;
+    document.getElementById('o2-name').textContent = n2;
+    document.getElementById('o3-name').textContent = n3;
+
+    document.getElementById('o1-msg').textContent = honeymoonMsg(n1);
+    document.getElementById('o2-msg').textContent = japanMsg(n2);
+    document.getElementById('o3-msg').textContent = beachFamilyMsg(n3);
+
+    const grid = document.getElementById('output-grid');
+    grid.classList.add('show');
+    document.getElementById('summary-card').classList.add('show');
+    setTimeout(() => grid.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+  }
+
+  function v(id) { return document.getElementById(id).value.trim(); }
+
+  function honeymoonMsg(name) {
+    return `Hey ${name}! I am SO excited for you and your engagement — this is such a big deal and you two are going to have the most incredible honeymoon.
+
+I recently became a travel advisor through Fora, and I'd genuinely love to help you plan it. Here's something most people don't realize: I can book you into the same luxury resorts at the exact same price as Expedia or Google — but through my preferred partner network, you'd also get things like complimentary breakfast for two, a room upgrade on arrival, and a $100 resort credit. No extra cost, just extra magic.
+
+For a honeymoon especially, those touches make an enormous difference. Would you be open to a quick call? I'd love to hear where you're dreaming of going and help you make it unforgettable.`;
+  }
+
+  function japanMsg(name) {
+    return `Hey ${name}! I've been thinking about when you mentioned Japan — I genuinely think it's one of the most rewarding trips a person can take, and I'd love to help you plan it.
+
+I just started as a travel advisor through Fora, and Japan has incredible hotels in our preferred partner network — from traditional ryokans to iconic city properties in Tokyo and Kyoto. I can get you exclusive perks like complimentary breakfast and resort credits at the same rate you'd find online.
+
+I can also help you think through the logistics — shinkansen timing, which neighborhoods to stay in, when Kyoto is actually manageable — all the stuff that makes the difference between a good trip and an exceptional one. Want me to put some ideas together for you?`;
+  }
+
+  function beachFamilyMsg(name) {
+    return `Hey! I know you're planning a beach trip with the kids this summer and I'd love to help — I just became a travel advisor through Fora and this is exactly the kind of trip I can genuinely add value to.
+
+Through our preferred partner network, I can book you into family-friendly resorts with dedicated kids clubs, pool programs, and family suite options. Because of my advisor access, you'd often get perks like complimentary breakfast for the whole family or resort credits that offset activity costs — at the same price you'd pay booking it yourself.
+
+No fee to you, no markup — I earn a commission directly from the hotel. All the upside, none of the hours of research. Want me to pull together a few options based on your dates and budget?`;
+  }
+
+  // ─── Copy outreach message ──────────────────────────────────
+  function copyMsg(n, btn) {
+    const text = document.getElementById('o' + n + '-msg').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2200);
+    });
+  }
+
+  // ─── Stage 5: Personalized response templates ──────────────
+  function resp1(name) {
+    return `No worries at all, ${name}! I just wanted to put myself on your radar for when the time is right. If any trips come up — or if anyone in your circle is planning something — I'd genuinely love to help. Through Fora I can unlock perks that are pretty hard to find anywhere else.`;
+  }
+  function resp2(name) {
+    return `Totally makes sense, ${name}! Just worth knowing — booking through me costs exactly the same as booking directly online. The difference is you walk away with things like complimentary breakfast, room upgrades, and resort credits that Expedia simply cannot offer. No obligation at all, just good to know for next time!`;
+  }
+  function resp3(name) {
+    return `Amazing, ${name} — I would love to help! Just tell me where you're thinking and what kind of trip it is — anniversary, family, adventure — and I'll put together two or three options with the best perks available. Usually takes me about 10 minutes. What dates are you looking at?`;
+  }
+
+  // ─── Stage 5: Client selector ──────────────────────────────
+  function selectClient(n) {
+    selectedClient = n;
+    document.querySelectorAll('.client-select-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i + 1 === n);
+    });
+    const name = document.getElementById('cs-name-' + n).textContent;
+    document.getElementById('resp-msg-1').textContent = resp1(name);
+    document.getElementById('resp-msg-2').textContent = resp2(name);
+    document.getElementById('resp-msg-3').textContent = resp3(name);
+  }
+
+  // ─── Stage 5: Sidekick 2.0 ─────────────────────────────────
+  function genSidekick() {
+    const raw = document.getElementById('sidekick-input').value.trim();
+    if (!raw) { document.getElementById('sidekick-input').focus(); return; }
+    const input = raw.toLowerCase();
+    const name  = document.getElementById('cs-name-' + selectedClient).textContent;
+    let response;
+
+    if (/price|cost|expensive|fee|charge|budget|afford/.test(input)) {
+      response = `Great question, ${name}! There is literally no extra cost to book through me — my commission comes directly from the hotel, not from you. What you pay is identical to what you'd pay on any hotel website or Expedia. The only difference is you also walk away with perks like complimentary breakfast, room upgrades, and resort credits on top. Same price, more value. Does that help?`;
+    } else if (/already|someone else|agent|advisor|friend|have someone/.test(input)) {
+      response = `Completely understand, ${name} — no worries at all! Just keep me in mind if anything changes down the road. Even as a second opinion, I'm always happy to help think through options. Hope the trip is incredible!`;
+    } else if (/not sure|maybe|think about|let me know|later|eventually/.test(input)) {
+      response = `Of course, ${name} — no pressure at all! I just wanted to plant the seed. When you're ready, even if it's six months from now, I'd love to help. Travel planning is honestly one of my favorite things. Reach out anytime.`;
+    } else if (/where|destination|place|country|recommend|suggest/.test(input)) {
+      response = `Love that you're open to ideas, ${name}! It really depends on what kind of experience you want — beach and relaxation, adventure, culture, or something more luxurious? Once I know your vibe I can give you two or three really specific recommendations with the exact perks you'd get through my advisor access. What sounds most appealing?`;
+    } else if (/when|date|month|summer|winter|spring|fall|timing/.test(input)) {
+      response = `Those dates work really well, ${name}! That timing actually opens up some great options. A few quick questions: how many people are traveling, and is there a rough budget or type of property in mind? I'll put together a shortlist with the best available perks for that window.`;
+    } else if (/honeymoon|wedding|anniversary|romantic|couple/.test(input)) {
+      response = `That is so exciting, ${name}! Romantic travel is genuinely my favorite to plan. I have access to some incredible properties through Fora's preferred partner network — places where I can get you daily breakfast, room upgrades on arrival, and resort credits automatically. Want me to put together a few dream options?`;
+    } else if (/family|kids|children|child/.test(input)) {
+      response = `Perfect, ${name} — family travel is something I love to help with. The key is finding properties that have real programming for the kids so the adults can actually relax. I can access family-friendly resorts with kids clubs, suite options, and perks like complimentary activities at the same price you'd pay booking direct. Want me to pull a few options for your dates?`;
+    } else if (/safari|africa|wildlife|lodge|tanzania|kenya/.test(input)) {
+      response = `${name}, a safari is genuinely one of the most incredible trips a person can take — and it's actually one of the places where an advisor makes the biggest difference. The lodges I can access through Fora include all-inclusive options with guided game drives, meals, and drinks already built in. I'd love to put together a couple of options. What time of year are you thinking?`;
+    } else {
+      response = `Thanks for sharing that, ${name}! I'd love to help you think through this further. What matters most to you for this trip — is it the location, type of property, a specific budget, or just making sure everything goes smoothly? Once I know that, I can put together a couple of really tailored options with the best perks I can unlock through my advisor access.`;
+    }
+
+    const output = document.getElementById('sidekick-output');
+    output.innerHTML = `
+      <div class="sidekick-result">
+        <div class="sidekick-result-label">✦ Sidekick 2.0 Response</div>
+        <div class="sidekick-result-text" id="sidekick-result-text">${response}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.2);" onclick="copySidekick(this)">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy Response
+        </button>
+      </div>`;
+    output.classList.add('show');
+    setTimeout(() => output.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  }
+
+  function copySidekick(btn) {
+    const text = document.getElementById('sidekick-result-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2200);
+    });
+  }
+
+  // ─── Stage 5: Copy response ────────────────────────────────
+  function copyResp(n, btn) {
+    const text = document.getElementById('resp-msg-' + n).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2200);
+    });
+  }
+
+  // ─── Stage 5: Activity log ─────────────────────────────────
+  const counts = { sent: 0, pos: 0, neg: 0 };
+
+  function logActivity(key) {
+    counts[key]++;
+    const countEl = document.getElementById('count-' + key);
+    const flashEl = document.getElementById('flash-' + key);
+
+    countEl.textContent = counts[key];
+    countEl.classList.add('bump');
+    setTimeout(() => countEl.classList.remove('bump'), 300);
+
+    flashEl.classList.add('show');
+    setTimeout(() => flashEl.classList.remove('show'), 1800);
+  }
+</script>
+
+</body>
+</html>
